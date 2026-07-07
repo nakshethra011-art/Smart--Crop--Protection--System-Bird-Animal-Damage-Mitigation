@@ -1,0 +1,114 @@
+
+
+#include <LCD_I2C.h>
+LCD_I2C lcd(0x27, 16, 2);
+#include <SoftwareSerial.h>
+SoftwareSerial mySerial(D3, D4); //rx - tx
+
+int trigPin = D6;    // Trigger
+int echoPin = D7;    // Echo
+#define buzzer D5
+#define pump D0
+long duration, cm, inches;
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+String inputString = "";
+unsigned char a[200];
+void setup()
+{
+  mySerial.begin(9600);   
+  Serial.begin(9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzer,OUTPUT);
+  pinMode(pump,OUTPUT);
+  digitalWrite(pump,HIGH);
+   digitalWrite(buzzer,LOW);
+  lcd.begin();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print(" BIRDS & ANIMAL ");
+  lcd.setCursor(0, 1);
+  lcd.print("DETECTION SYSTEM");
+  delay(3000);
+  lcd.clear();
+  SendMessage();
+    
+}
+void loop() 
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(15);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // pinMode(echoPin, INPUT);
+  duration = pulseIn(echoPin, HIGH);
+
+  // Convert the time into a distance
+  cm = (duration / 2) / 29.1;
+  // set the cursor to column 0, line 1
+  // (note: line 1 is the second row, since counting begins with 0):
+
+
+
+
+  lcd.setCursor(0, 0);
+  lcd.print("ultra value: ");
+  
+  // print the number of seconds since reset:
+  if (cm <= 9) {
+    lcd.print("0");
+    lcd.print(cm);
+  }
+  else if(cm <= 99) {
+    lcd.print("");
+    lcd.print(cm);
+  }
+  else
+  {
+    
+  }
+  Serial.print("ultra value: ");
+Serial.println(cm);
+delay(300);
+  if(cm<15)
+  {
+      SendMessage();
+    
+  digitalWrite(buzzer,HIGH);
+  digitalWrite(pump,LOW);
+  }
+  else
+  {
+     digitalWrite(buzzer,LOW);
+  digitalWrite(pump,HIGH);
+  }
+}
+ void SendMessage()
+{
+
+  mySerial.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+
+  delay(2000);  // Delay of 1000 milli seconds or 1 second
+
+  mySerial.println("AT+CMGS=\"+91xxxxxxxxxx\"\r"); // Replace x with mobile number
+
+  delay(2000);
+  lcd.clear();
+  lcd.setCursor(0,1);
+  lcd.print("MSG SENDING...");
+ 
+  mySerial.println("MSG: ");
+  mySerial.println("ANIMAL HAS BEEN DETECTED!
+  
+  ");
+
+  delay(100);
+
+  mySerial.println((char)26);// ASCII code of CTRL+Z
+
+  delay(4000);
+
+lcd.clear();
+}
